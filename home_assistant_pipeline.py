@@ -7,8 +7,8 @@ from typing import List
 
 class Pipeline(FunctionCallingBlueprint):
 	class Valves(FunctionCallingBlueprint.Valves):
-		HOME_ASSISTANT_API_URL: str = ""
-		HOME_ASSISTANT_TOKEN: str = ""
+		HOME_ASSISTANT_API_URL: str = os.getenv("HOME_ASSISTANT_API_URL", "")
+		HOME_ASSISTANT_TOKEN: str = os.getenv("HOME_ASSISTANT_TOKEN", "")
 
 	class Tools:
 		def __init__(self, pipeline) -> None:
@@ -76,18 +76,17 @@ class Pipeline(FunctionCallingBlueprint):
 
 	def __init__(self):
 		super().__init__()
-
-		# Prompt user for missing configuration values
-		home_assistant_api_url = os.getenv("HOME_ASSISTANT_API_URL", "")
-		home_assistant_token = os.getenv("HOME_ASSISTANT_TOKEN", "")
+		self.name = "Home Assistant Pipeline"
+		
+		# Ensure environment variables are set before proceeding
+		home_assistant_api_url = os.getenv("HOME_ASSISTANT_API_URL")
+		home_assistant_token = os.getenv("HOME_ASSISTANT_TOKEN")
 
 		if not home_assistant_api_url:
-			home_assistant_api_url = input("Enter Home Assistant API URL: ")
-
+			raise ValueError("Environment variable HOME_ASSISTANT_API_URL not set")
 		if not home_assistant_token:
-			home_assistant_token = input("Enter Home Assistant Token: ")
+			raise ValueError("Environment variable HOME_ASSISTANT_TOKEN not set")
 
-		self.name = "Home Assistant Pipeline"
 		self.valves = self.Valves(
 			**{
 				**self.valves.model_dump(),
