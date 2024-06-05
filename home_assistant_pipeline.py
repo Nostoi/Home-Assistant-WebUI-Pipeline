@@ -3,14 +3,15 @@ from blueprints.function_calling_blueprint import Pipeline as FunctionCallingBlu
 import requests
 import os
 import ast
+from typing import List
 
 class Pipeline(FunctionCallingBlueprint):
 	class Valves(FunctionCallingBlueprint.Valves):
 		HOME_ASSISTANT_API_URL: str
 		HOME_ASSISTANT_TOKEN: str
 
-		def __init__(self):
-			super().__init__()
+		def __init__(self, pipelines: List[str] = ["*"], priority: int = 0):
+			super().__init__(pipelines=pipelines, priority=priority)
 			self.HOME_ASSISTANT_API_URL = os.getenv("HOME_ASSISTANT_API_URL", input("Enter Home Assistant API URL: "))
 			self.HOME_ASSISTANT_TOKEN = os.getenv("HOME_ASSISTANT_TOKEN", input("Enter Home Assistant Token: "))
 
