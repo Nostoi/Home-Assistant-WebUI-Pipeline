@@ -7,13 +7,15 @@ from typing import List
 
 class Pipeline(FunctionCallingBlueprint):
 	class Valves(FunctionCallingBlueprint.Valves):
-		HOME_ASSISTANT_API_URL: str
-		HOME_ASSISTANT_TOKEN: str
+		HOME_ASSISTANT_API_URL: str = os.getenv("HOME_ASSISTANT_API_URL", "")
+		HOME_ASSISTANT_TOKEN: str = os.getenv("HOME_ASSISTANT_TOKEN", "")
 
-		def __init__(self):
-			super().__init__()
-			self.HOME_ASSISTANT_API_URL = os.getenv("HOME_ASSISTANT_API_URL", input("Enter Home Assistant API URL: "))
-			self.HOME_ASSISTANT_TOKEN = os.getenv("HOME_ASSISTANT_TOKEN", input("Enter Home Assistant Token: "))
+		def __init__(self, **data):
+			super().__init__(**data)
+			if not self.HOME_ASSISTANT_API_URL:
+				self.HOME_ASSISTANT_API_URL = input("Enter Home Assistant API URL: ")
+			if not self.HOME_ASSISTANT_TOKEN:
+				self.HOME_ASSISTANT_TOKEN = input("Enter Home Assistant Token: ")
 
 	class Tools:
 		def __init__(self, pipeline) -> None:
@@ -82,5 +84,5 @@ class Pipeline(FunctionCallingBlueprint):
 	def __init__(self):
 		super().__init__()
 		self.name = "Home Assistant Pipeline"
-		self.valves = self.Valves()
+		self.valves = self.Valves(pipelines=["*"], priority=0)
 		self.tools = self.Tools(self)
