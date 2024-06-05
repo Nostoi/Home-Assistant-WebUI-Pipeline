@@ -10,6 +10,11 @@ class Pipeline(FunctionCallingBlueprint):
 		HOME_ASSISTANT_API_URL: str = os.getenv("HOME_ASSISTANT_API_URL", "")
 		HOME_ASSISTANT_TOKEN: str = os.getenv("HOME_ASSISTANT_TOKEN", "")
 
+		def __init__(self, **data):
+			super().__init__(**data)
+			self.HOME_ASSISTANT_API_URL = os.getenv("HOME_ASSISTANT_API_URL", self.HOME_ASSISTANT_API_URL)
+			self.HOME_ASSISTANT_TOKEN = os.getenv("HOME_ASSISTANT_TOKEN", self.HOME_ASSISTANT_TOKEN)
+
 	class Tools:
 		def __init__(self, pipeline) -> None:
 			self.pipeline = pipeline
@@ -77,10 +82,10 @@ class Pipeline(FunctionCallingBlueprint):
 	def __init__(self):
 		super().__init__()
 		self.name = "Home Assistant Pipeline"
-		
+
 		# Ensure environment variables are set before proceeding
-		home_assistant_api_url = os.getenv("HOME_ASSISTANT_API_URL")
-		home_assistant_token = os.getenv("HOME_ASSISTANT_TOKEN")
+		home_assistant_api_url = os.getenv("HOME_ASSISTANT_API_URL", "")
+		home_assistant_token = os.getenv("HOME_ASSISTANT_TOKEN", "")
 
 		if not home_assistant_api_url:
 			raise ValueError("Environment variable HOME_ASSISTANT_API_URL not set")
