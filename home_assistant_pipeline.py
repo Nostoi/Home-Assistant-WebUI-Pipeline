@@ -2,7 +2,7 @@
 from blueprints.function_calling_blueprint import Pipeline as FunctionCallingBlueprint
 import requests
 import os
-import numexpr as ne
+import ast
 
 class Pipeline(FunctionCallingBlueprint):
 	class Valves(FunctionCallingBlueprint.Valves):
@@ -55,12 +55,12 @@ class Pipeline(FunctionCallingBlueprint):
 
 		def calculator(self, equation: str) -> str:
 			"""
-			Calculate the result of an equation.
+			Calculate the result of an equation using safe evaluation.
 
 			:param equation: The equation to calculate.
 			"""
 			try:
-				result = ne.evaluate(equation)
+				result = ast.literal_eval(equation)
 				return f"{equation} = {result}"
 			except Exception as e:
 				print(e)
