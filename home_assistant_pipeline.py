@@ -7,15 +7,8 @@ from typing import List
 
 class Pipeline(FunctionCallingBlueprint):
 	class Valves(FunctionCallingBlueprint.Valves):
-		HOME_ASSISTANT_API_URL: str = os.getenv("HOME_ASSISTANT_API_URL", "")
-		HOME_ASSISTANT_TOKEN: str = os.getenv("HOME_ASSISTANT_TOKEN", "")
-
-		def __init__(self, **data):
-			super().__init__(**data)
-			if not self.HOME_ASSISTANT_API_URL:
-				self.HOME_ASSISTANT_API_URL = input("Enter Home Assistant API URL: ")
-			if not self.HOME_ASSISTANT_TOKEN:
-				self.HOME_ASSISTANT_TOKEN = input("Enter Home Assistant Token: ")
+		HOME_ASSISTANT_API_URL: str = ""
+		HOME_ASSISTANT_TOKEN: str = ""
 
 	class Tools:
 		def __init__(self, pipeline) -> None:
@@ -83,6 +76,24 @@ class Pipeline(FunctionCallingBlueprint):
 
 	def __init__(self):
 		super().__init__()
+
+		# Prompt user for missing configuration values
+		home_assistant_api_url = os.getenv("HOME_ASSISTANT_API_URL", "")
+		home_assistant_token = os.getenv("HOME_ASSISTANT_TOKEN", "")
+
+		if not home_assistant_api_url:
+			home_assistant_api_url = input("Enter Home Assistant API URL: ")
+
+		if not home_assistant_token:
+			home_assistant_token = input("Enter Home Assistant Token: ")
+
 		self.name = "Home Assistant Pipeline"
-		self.valves = self.Valves(pipelines=["*"], priority=0)
+		self.valves = self.Valves(
+			**{
+				**self.valves.model_dump(),
+				"pipelines": ["*"],  # Connect to all pipelines
+				"HOME_ASSISTANT_API_URL": home_assistant_api_url,
+				"HOME_ASSISTANT_TOKEN": home_assistant_token,
+			},
+		)
 		self.tools = self.Tools(self)
