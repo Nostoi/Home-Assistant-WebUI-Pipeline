@@ -10,6 +10,7 @@ class Pipeline(FunctionCallingBlueprint):
 		HOME_ASSISTANT_TOKEN: str
 
 		def __init__(self):
+			super().__init__()
 			self.HOME_ASSISTANT_API_URL = os.getenv("HOME_ASSISTANT_API_URL", input("Enter Home Assistant API URL: "))
 			self.HOME_ASSISTANT_TOKEN = os.getenv("HOME_ASSISTANT_TOKEN", input("Enter Home Assistant Token: "))
 
