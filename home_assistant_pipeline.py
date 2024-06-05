@@ -6,8 +6,12 @@ import ast
 
 class Pipeline(FunctionCallingBlueprint):
 	class Valves(FunctionCallingBlueprint.Valves):
-		HOME_ASSISTANT_API_URL: str = os.getenv("HOME_ASSISTANT_API_URL", "http://your-home-assistant-url")
-		HOME_ASSISTANT_TOKEN: str = os.getenv("HOME_ASSISTANT_TOKEN", "")
+		HOME_ASSISTANT_API_URL: str
+		HOME_ASSISTANT_TOKEN: str
+
+		def __init__(self):
+			self.HOME_ASSISTANT_API_URL = os.getenv("HOME_ASSISTANT_API_URL", input("Enter Home Assistant API URL: "))
+			self.HOME_ASSISTANT_TOKEN = os.getenv("HOME_ASSISTANT_TOKEN", input("Enter Home Assistant Token: "))
 
 	class Tools:
 		def __init__(self, pipeline) -> None:
@@ -75,14 +79,6 @@ class Pipeline(FunctionCallingBlueprint):
 
 	def __init__(self):
 		super().__init__()
-		if not os.getenv("HOME_ASSISTANT_API_URL") or not os.getenv("HOME_ASSISTANT_TOKEN"):
-			raise ValueError("Home Assistant API URL and Token must be set in environment variables.")
 		self.name = "Home Assistant Pipeline"
-		self.valves = self.Valves(
-			**{
-				**self.valves.model_dump(),
-				"HOME_ASSISTANT_API_URL": os.getenv("HOME_ASSISTANT_API_URL", "http://your-home-assistant-url"),
-				"HOME_ASSISTANT_TOKEN": os.getenv("HOME_ASSISTANT_TOKEN", ""),
-			}
-		)
+		self.valves = self.Valves()
 		self.tools = self.Tools(self)
