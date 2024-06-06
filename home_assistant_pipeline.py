@@ -20,7 +20,7 @@ class Pipeline(FunctionCallingBlueprint):
 			headers = self._get_headers()
 			response = requests.get(url, headers=headers)
 			response.raise_for_status()
-			return response.json()
+			return self._format_response(response.json(), "get_state", entity_id=entity_id)
 
 		def call_service(self, domain: str, service: str, service_data: dict) -> dict:
 			"""Call a service."""
@@ -28,7 +28,7 @@ class Pipeline(FunctionCallingBlueprint):
 			headers = self._get_headers()
 			response = requests.post(url, headers=headers, json=service_data)
 			response.raise_for_status()
-			return response.json()
+			return self._format_response(response.json(), "call_service", domain=domain, service=service, service_data=service_data)
 
 		def get_all_states(self) -> dict:
 			"""Get the states of all entities."""
@@ -36,7 +36,7 @@ class Pipeline(FunctionCallingBlueprint):
 			headers = self._get_headers()
 			response = requests.get(url, headers=headers)
 			response.raise_for_status()
-			return response.json()
+			return self._format_response(response.json(), "get_all_states")
 
 		def get_events(self) -> dict:
 			"""Get all available events."""
@@ -44,7 +44,7 @@ class Pipeline(FunctionCallingBlueprint):
 			headers = self._get_headers()
 			response = requests.get(url, headers=headers)
 			response.raise_for_status()
-			return response.json()
+			return self._format_response(response.json(), "get_events")
 
 		def fire_event(self, event_type: str, event_data: dict) -> dict:
 			"""Fire an event."""
@@ -52,7 +52,7 @@ class Pipeline(FunctionCallingBlueprint):
 			headers = self._get_headers()
 			response = requests.post(url, headers=headers, json=event_data)
 			response.raise_for_status()
-			return response.json()
+			return self._format_response(response.json(), "fire_event", event_type=event_type, event_data=event_data)
 
 		def calculator(self, equation: str) -> str:
 			"""
@@ -74,13 +74,18 @@ class Pipeline(FunctionCallingBlueprint):
 				"Content-Type": "application/json",
 			}
 
+		def _format_response(self, data, name, **params):
+			"""Format the response to be suitable for the LLM pipeline."""
+			return {
+				"name": name,
+				"parameters": {
+					"data": data,
+					**params
+				}
+			}
+
 	def __init__(self):
 		super().__init__()
-		# Optionally, you can set the id and name of the pipeline.
-		# Best practice is to not specify the id so that it can be automatically inferred from the filename, so that users can install multiple versions of the same pipeline.
-		# The identifier must be unique across all pipelines.
-		# The identifier must be an alphanumeric string that can include underscores or hyphens. It cannot contain spaces, special characters, slashes, or backslashes.
-		# self.id = "home_assistant_pipeline"
 		self.name = "Home Assistant Pipeline"
 		self.valves = self.Valves(
 			**{
