@@ -26,7 +26,7 @@ class Pipeline(FunctionCallingBlueprint):
 		def __init__(self, pipeline) -> None:
 			self.pipeline = pipeline
 
-		def get_state(self, entity_id: str) -> ResponseSchema:
+		def get_state(self, entity_id: str) -> str:
 			"""Get the state of an entity."""
 			try:
 				logging.debug(f"get_state called with entity_id: {entity_id}")
@@ -37,33 +37,33 @@ class Pipeline(FunctionCallingBlueprint):
 				data = response.json()
 				logging.debug(f"get_state raw data: {data}")
 				if isinstance(data, dict) and "state" in data:
-					return ResponseSchema(result=self._format_response(data, "get_state", entity_id=entity_id))
+					return self._format_response(data, "get_state", entity_id=entity_id)
 				else:
 					logging.error(f"Unexpected data structure in get_state: {data}")
-					return ResponseSchema(error="Unexpected data structure")
+					return f"Error: Unexpected data structure: {data}"
 			except (requests.exceptions.RequestException, IndexError) as e:
 				logging.error(f"Error in get_state: {e}")
-				return ResponseSchema(error=str(e))
+				return f"Error: {str(e)}"
 
-		def call_service(self, domain: str, service: str, service_data: dict) -> ResponseSchema:
+		def call_service(self, domain: str, service: str, service_data: dict) -> str:
 			"""Call a service."""
 			try:
 				logging.debug(f"call_service called with domain: {domain}, service: {service}, service_data: {service_data}")
 				if not domain or not service or not isinstance(service_data, dict):
 					logging.error(f"Invalid parameters in call_service: domain={domain}, service={service}, service_data={service_data}")
-					return ResponseSchema(error="Invalid parameters")
+					return "Error: Invalid parameters"
 				url = f"{self.pipeline.valves.HOME_ASSISTANT_API_URL}/api/services/{domain}/{service}"
 				headers = self._get_headers()
 				response = requests.post(url, headers=headers, json=service_data)
 				response.raise_for_status()
 				data = response.json()
 				logging.debug(f"call_service data: {data}")
-				return ResponseSchema(result=self._format_response(data, "call_service", domain=domain, service=service, service_data=service_data))
+				return self._format_response(data, "call_service", domain=domain, service=service, service_data=service_data)
 			except (requests.exceptions.RequestException, IndexError) as e:
 				logging.error(f"Error in call_service: {e}")
-				return ResponseSchema(error=str(e))
+				return f"Error: {str(e)}"
 
-		def get_all_states(self) -> ResponseSchema:
+		def get_all_states(self) -> str:
 			"""Get the states of all entities."""
 			try:
 				logging.debug("get_all_states called")
@@ -73,12 +73,12 @@ class Pipeline(FunctionCallingBlueprint):
 				response.raise_for_status()
 				data = response.json()
 				logging.debug(f"get_all_states data: {data}")
-				return ResponseSchema(result=self._format_response(data, "get_all_states"))
+				return self._format_response(data, "get_all_states")
 			except (requests.exceptions.RequestException, IndexError) as e:
 				logging.error(f"Error in get_all_states: {e}")
-				return ResponseSchema(error=str(e))
+				return f"Error: {str(e)}"
 
-		def get_events(self) -> ResponseSchema:
+		def get_events(self) -> str:
 			"""Get all available events."""
 			try:
 				logging.debug("get_events called")
@@ -88,12 +88,12 @@ class Pipeline(FunctionCallingBlueprint):
 				response.raise_for_status()
 				data = response.json()
 				logging.debug(f"get_events data: {data}")
-				return ResponseSchema(result=self._format_response(data, "get_events"))
+				return self._format_response(data, "get_events")
 			except (requests.exceptions.RequestException, IndexError) as e:
 				logging.error(f"Error in get_events: {e}")
-				return ResponseSchema(error=str(e))
+				return f"Error: {str(e)}"
 
-		def fire_event(self, event_type: str, event_data: dict) -> ResponseSchema:
+		def fire_event(self, event_type: str, event_data: dict) -> str:
 			"""Fire an event."""
 			try:
 				logging.debug(f"fire_event called with event_type: {event_type}, event_data: {event_data}")
@@ -103,10 +103,10 @@ class Pipeline(FunctionCallingBlueprint):
 				response.raise_for_status()
 				data = response.json()
 				logging.debug(f"fire_event data: {data}")
-				return ResponseSchema(result=self._format_response(data, "fire_event", event_type=event_type, event_data=event_data))
+				return self._format_response(data, "fire_event", event_type=event_type, event_data=event_data)
 			except (requests.exceptions.RequestException, IndexError) as e:
 				logging.error(f"Error in fire_event: {e}")
-				return ResponseSchema(error=str(e))
+				return f"Error: {str(e)}"
 
 		def calculator(self, equation: str) -> str:
 			"""
@@ -121,7 +121,7 @@ class Pipeline(FunctionCallingBlueprint):
 				return f"{equation} = {result}"
 			except Exception as e:
 				logging.error(f"Error in calculator: {e}")
-				return f"Invalid equation: {str(e)}"
+				return f"Error: Invalid equation: {str(e)}"
 
 		def simple_test(self) -> str:
 			"""Simple test method to verify pipeline access."""
@@ -136,7 +136,7 @@ class Pipeline(FunctionCallingBlueprint):
 			logging.debug(f"Generated headers: {headers}")
 			return headers
 
-		def _format_response(self, data, name, **params) -> dict:
+		def _format_response(self, data, name, **params) -> str:
 			"""Format the response to be suitable for the LLM pipeline."""
 			response = {
 				"name": name,
