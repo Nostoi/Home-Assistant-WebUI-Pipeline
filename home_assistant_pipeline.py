@@ -22,7 +22,7 @@ class Pipeline(FunctionCallingBlueprint):
 				response = requests.get(url, headers=headers)
 				response.raise_for_status()
 				return self._format_response(response.json(), "get_state", entity_id=entity_id)
-			except requests.exceptions.RequestException as e:
+			except (requests.exceptions.RequestException, IndexError) as e:
 				return self._format_error("get_state", str(e), entity_id=entity_id)
 
 		def call_service(self, domain: str, service: str, service_data: dict) -> Union[dict, str]:
@@ -33,7 +33,7 @@ class Pipeline(FunctionCallingBlueprint):
 				response = requests.post(url, headers=headers, json=service_data)
 				response.raise_for_status()
 				return self._format_response(response.json(), "call_service", domain=domain, service=service, service_data=service_data)
-			except requests.exceptions.RequestException as e:
+			except (requests.exceptions.RequestException, IndexError) as e:
 				return self._format_error("call_service", str(e), domain=domain, service=service, service_data=service_data)
 
 		def get_all_states(self) -> Union[dict, str]:
@@ -44,7 +44,7 @@ class Pipeline(FunctionCallingBlueprint):
 				response = requests.get(url, headers=headers)
 				response.raise_for_status()
 				return self._format_response(response.json(), "get_all_states")
-			except requests.exceptions.RequestException as e:
+			except (requests.exceptions.RequestException, IndexError) as e:
 				return self._format_error("get_all_states", str(e))
 
 		def get_events(self) -> Union[dict, str]:
@@ -55,7 +55,7 @@ class Pipeline(FunctionCallingBlueprint):
 				response = requests.get(url, headers=headers)
 				response.raise_for_status()
 				return self._format_response(response.json(), "get_events")
-			except requests.exceptions.RequestException as e:
+			except (requests.exceptions.RequestException, IndexError) as e:
 				return self._format_error("get_events", str(e))
 
 		def fire_event(self, event_type: str, event_data: dict) -> Union[dict, str]:
@@ -66,7 +66,7 @@ class Pipeline(FunctionCallingBlueprint):
 				response = requests.post(url, headers=headers, json=event_data)
 				response.raise_for_status()
 				return self._format_response(response.json(), "fire_event", event_type=event_type, event_data=event_data)
-			except requests.exceptions.RequestException as e:
+			except (requests.exceptions.RequestException, IndexError) as e:
 				return self._format_error("fire_event", str(e), event_type=event_type, event_data=event_data)
 
 		def calculator(self, equation: str) -> str:
