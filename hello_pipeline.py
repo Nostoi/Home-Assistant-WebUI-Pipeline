@@ -1,7 +1,7 @@
 # hello_pipeline.py
 
 from blueprints.function_calling_blueprint import Pipeline as FunctionCallingBlueprint
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import logging
 import datetime
@@ -34,7 +34,6 @@ class HelloPipeline(FunctionCallingBlueprint):
 		self.name = "Hello Pipeline"
 		self.tools = self.Tools(self)
 
-# Set up FastAPI app
 app = FastAPI()
 
 @app.post("/hello_pipeline/filter/inlet", response_model=ResponseSchema)
@@ -45,7 +44,7 @@ async def hello_pipeline_inlet(request: RequestSchema):
 		function_parameters = request.function_parameters
 
 		if not hasattr(pipeline.tools, function_name):
-			raise ValueError("Invalid function name")
+			raise HTTPException(status_code=400, detail="Invalid function name")
 
 		function = getattr(pipeline.tools, function_name)
 		result = function(**function_parameters)
