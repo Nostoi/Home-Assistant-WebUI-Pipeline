@@ -16,7 +16,7 @@ class ResponseSchema(BaseModel):
 	result: dict
 	error: str = None
 
-class HelloPipeline(FunctionCallingBlueprint):
+class Pipeline(FunctionCallingBlueprint):  # Renamed to Pipeline
 	class Tools:
 		def __init__(self, pipeline):
 			self.pipeline = pipeline
@@ -39,7 +39,7 @@ app = FastAPI()
 @app.post("/hello_pipeline/filter/inlet", response_model=ResponseSchema)
 async def hello_pipeline_inlet(request: RequestSchema):
 	try:
-		pipeline = HelloPipeline()
+		pipeline = Pipeline()
 		function_name = request.function_name
 		function_parameters = request.function_parameters
 
