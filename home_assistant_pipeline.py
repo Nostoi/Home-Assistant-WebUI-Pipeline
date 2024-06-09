@@ -5,8 +5,17 @@ import os
 import ast
 import logging
 from typing import List, Dict, Union
+from pydantic import BaseModel, ValidationError
 
 logging.basicConfig(level=logging.DEBUG)
+
+class RequestSchema(BaseModel):
+	function_name: str
+	function_parameters: Dict[str, Union[str, int, float, dict]]
+
+class ResponseSchema(BaseModel):
+	result: Union[Dict[str, Union[str, int, float, dict]], None] = None
+	error: Union[str, None] = None
 
 class Pipeline(FunctionCallingBlueprint):
 	class Valves(FunctionCallingBlueprint.Valves):
@@ -17,7 +26,7 @@ class Pipeline(FunctionCallingBlueprint):
 		def __init__(self, pipeline) -> None:
 			self.pipeline = pipeline
 
-		def get_state(self, entity_id: str) -> Union[dict, str]:
+		def get_state(self, entity_id: str) -> ResponseSchema:
 			"""Get the state of an entity."""
 			try:
 				url = f"{self.pipeline.valves.HOME_ASSISTANT_API_URL}/api/states/{entity_id}"
@@ -26,12 +35,12 @@ class Pipeline(FunctionCallingBlueprint):
 				response.raise_for_status()
 				data = response.json()
 				logging.debug(f"get_state data: {data}")
-				return self._format_response(data, "get_state", entity_id=entity_id)
+				return ResponseSchema(result=self._format_response(data, "get_state", entity_id=entity_id))
 			except (requests.exceptions.RequestException, IndexError) as e:
 				logging.error(f"Error in get_state: {e}")
-				return self._format_error("get_state", str(e), entity_id=entity_id)
+				return ResponseSchema(error=str(e))
 
-		def call_service(self, domain: str, service: str, service_data: dict) -> Union[dict, str]:
+		def call_service(self, domain: str, service: str, service_data: dict) -> ResponseSchema:
 			"""Call a service."""
 			try:
 				url = f"{self.pipeline.valves.HOME_ASSISTANT_API_URL}/api/services/{domain}/{service}"
@@ -40,12 +49,12 @@ class Pipeline(FunctionCallingBlueprint):
 				response.raise_for_status()
 				data = response.json()
 				logging.debug(f"call_service data: {data}")
-				return self._format_response(data, "call_service", domain=domain, service=service, service_data=service_data)
+				return ResponseSchema(result=self._format_response(data, "call_service", domain=domain, service=service, service_data=service_data))
 			except (requests.exceptions.RequestException, IndexError) as e:
 				logging.error(f"Error in call_service: {e}")
-				return self._format_error("call_service", str(e), domain=domain, service=service, service_data=service_data)
+				return ResponseSchema(error=str(e))
 
-		def get_all_states(self) -> Union[dict, str]:
+		def get_all_states(self) -> ResponseSchema:
 			"""Get the states of all entities."""
 			try:
 				url = f"{self.pipeline.valves.HOME_ASSISTANT_API_URL}/api/states"
@@ -54,12 +63,12 @@ class Pipeline(FunctionCallingBlueprint):
 				response.raise_for_status()
 				data = response.json()
 				logging.debug(f"get_all_states data: {data}")
-				return self._format_response(data, "get_all_states")
+				return ResponseSchema(result=self._format_response(data, "get_all_states"))
 			except (requests.exceptions.RequestException, IndexError) as e:
 				logging.error(f"Error in get_all_states: {e}")
-				return self._format_error("get_all_states", str(e))
+				return ResponseSchema(error=str(e))
 
-		def get_events(self) -> Union[dict, str]:
+		def get_events(self) -> ResponseSchema:
 			"""Get all available events."""
 			try:
 				url = f"{self.pipeline.valves.HOME_ASSISTANT_API_URL}/api/events"
@@ -68,12 +77,12 @@ class Pipeline(FunctionCallingBlueprint):
 				response.raise_for_status()
 				data = response.json()
 				logging.debug(f"get_events data: {data}")
-				return self._format_response(data, "get_events")
+				return ResponseSchema(result=self._format_response(data, "get_events"))
 			except (requests.exceptions.RequestException, IndexError) as e:
 				logging.error(f"Error in get_events: {e}")
-				return self._format_error("get_events", str(e))
+				return ResponseSchema(error=str(e))
 
-		def fire_event(self, event_type: str, event_data: dict) -> Union[dict, str]:
+		def fire_event(self, event_type: str, event_data: dict) -> ResponseSchema:
 			"""Fire an event."""
 			try:
 				url = f"{self.pipeline.valves.HOME_ASSISTANT_API_URL}/api/events/{event_type}"
@@ -82,10 +91,10 @@ class Pipeline(FunctionCallingBlueprint):
 				response.raise_for_status()
 				data = response.json()
 				logging.debug(f"fire_event data: {data}")
-				return self._format_response(data, "fire_event", event_type=event_type, event_data=event_data)
+				return ResponseSchema(result=self._format_response(data, "fire_event", event_type=event_type, event_data=event_data))
 			except (requests.exceptions.RequestException, IndexError) as e:
 				logging.error(f"Error in fire_event: {e}")
-				return self._format_error("fire_event", str(e), event_type=event_type, event_data=event_data)
+				return ResponseSchema(error=str(e))
 
 		def calculator(self, equation: str) -> str:
 			"""
@@ -120,14 +129,6 @@ class Pipeline(FunctionCallingBlueprint):
 					"data": data,
 					**params
 				}
-			}
-
-		def _format_error(self, name, error, **params) -> dict:
-			"""Format an error response to be suitable for the LLM pipeline."""
-			return {
-				"name": name,
-				"error": error,
-				"parameters": params
 			}
 
 	def __init__(self):
