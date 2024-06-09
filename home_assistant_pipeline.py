@@ -26,10 +26,10 @@ class Pipeline(FunctionCallingBlueprint):
 		def __init__(self, pipeline) -> None:
 			self.pipeline = pipeline
 
-		def get_state(self, entity_id: str) -> str:
+		def get_state(self, entity_id: str) -> ResponseSchema:
 			"""Get the state of an entity."""
+			logging.debug(f"get_state called with entity_id: {entity_id}")
 			try:
-				logging.debug(f"get_state called with entity_id: {entity_id}")
 				url = f"{self.pipeline.valves.HOME_ASSISTANT_API_URL}/api/states/{entity_id}"
 				headers = self._get_headers()
 				response = requests.get(url, headers=headers)
@@ -37,95 +37,125 @@ class Pipeline(FunctionCallingBlueprint):
 				data = response.json()
 				logging.debug(f"get_state raw data: {data}")
 				if isinstance(data, dict) and "state" in data:
-					return self._format_response(data, "get_state", entity_id=entity_id)
+					return ResponseSchema(result=self._format_response(data, "get_state", entity_id=entity_id))
 				else:
 					logging.error(f"Unexpected data structure in get_state: {data}")
-					return f"Error: Unexpected data structure: {data}"
-			except (requests.exceptions.RequestException, IndexError) as e:
-				logging.error(f"Error in get_state: {e}")
-				return f"Error: {str(e)}"
+					return ResponseSchema(error=f"Unexpected data structure: {data}")
+			except requests.exceptions.RequestException as e:
+				logging.error(f"Request error in get_state: {e}")
+				return ResponseSchema(error=str(e))
+			except IndexError as e:
+				logging.error(f"Index error in get_state: {e}")
+				return ResponseSchema(error=str(e))
+			except Exception as e:
+				logging.error(f"Unexpected error in get_state: {e}")
+				return ResponseSchema(error=str(e))
 
-		def call_service(self, domain: str, service: str, service_data: dict) -> str:
+		def call_service(self, domain: str, service: str, service_data: dict) -> ResponseSchema:
 			"""Call a service."""
+			logging.debug(f"call_service called with domain: {domain}, service: {service}, service_data: {service_data}")
+			if not domain or not service or not isinstance(service_data, dict):
+				logging.error(f"Invalid parameters in call_service: domain={domain}, service={service}, service_data={service_data}")
+				return ResponseSchema(error="Invalid parameters")
 			try:
-				logging.debug(f"call_service called with domain: {domain}, service: {service}, service_data: {service_data}")
-				if not domain or not service or not isinstance(service_data, dict):
-					logging.error(f"Invalid parameters in call_service: domain={domain}, service={service}, service_data={service_data}")
-					return "Error: Invalid parameters"
 				url = f"{self.pipeline.valves.HOME_ASSISTANT_API_URL}/api/services/{domain}/{service}"
 				headers = self._get_headers()
 				response = requests.post(url, headers=headers, json=service_data)
 				response.raise_for_status()
 				data = response.json()
 				logging.debug(f"call_service data: {data}")
-				return self._format_response(data, "call_service", domain=domain, service=service, service_data=service_data)
-			except (requests.exceptions.RequestException, IndexError) as e:
-				logging.error(f"Error in call_service: {e}")
-				return f"Error: {str(e)}"
+				return ResponseSchema(result=self._format_response(data, "call_service", domain=domain, service=service, service_data=service_data))
+			except requests.exceptions.RequestException as e:
+				logging.error(f"Request error in call_service: {e}")
+				return ResponseSchema(error=str(e))
+			except IndexError as e:
+				logging.error(f"Index error in call_service: {e}")
+				return ResponseSchema(error=str(e))
+			except Exception as e:
+				logging.error(f"Unexpected error in call_service: {e}")
+				return ResponseSchema(error=str(e))
 
-		def get_all_states(self) -> str:
+		def get_all_states(self) -> ResponseSchema:
 			"""Get the states of all entities."""
+			logging.debug("get_all_states called")
 			try:
-				logging.debug("get_all_states called")
 				url = f"{self.pipeline.valves.HOME_ASSISTANT_API_URL}/api/states"
 				headers = self._get_headers()
 				response = requests.get(url, headers=headers)
 				response.raise_for_status()
 				data = response.json()
 				logging.debug(f"get_all_states data: {data}")
-				return self._format_response(data, "get_all_states")
-			except (requests.exceptions.RequestException, IndexError) as e:
-				logging.error(f"Error in get_all_states: {e}")
-				return f"Error: {str(e)}"
+				return ResponseSchema(result=self._format_response(data, "get_all_states"))
+			except requests.exceptions.RequestException as e:
+				logging.error(f"Request error in get_all_states: {e}")
+				return ResponseSchema(error=str(e))
+			except IndexError as e:
+				logging.error(f"Index error in get_all_states: {e}")
+				return ResponseSchema(error=str(e))
+			except Exception as e:
+				logging.error(f"Unexpected error in get_all_states: {e}")
+				return ResponseSchema(error=str(e))
 
-		def get_events(self) -> str:
+		def get_events(self) -> ResponseSchema:
 			"""Get all available events."""
+			logging.debug("get_events called")
 			try:
-				logging.debug("get_events called")
 				url = f"{self.pipeline.valves.HOME_ASSISTANT_API_URL}/api/events"
 				headers = self._get_headers()
 				response = requests.get(url, headers=headers)
 				response.raise_for_status()
 				data = response.json()
 				logging.debug(f"get_events data: {data}")
-				return self._format_response(data, "get_events")
-			except (requests.exceptions.RequestException, IndexError) as e:
-				logging.error(f"Error in get_events: {e}")
-				return f"Error: {str(e)}"
+				return ResponseSchema(result=self._format_response(data, "get_events"))
+			except requests.exceptions.RequestException as e:
+				logging.error(f"Request error in get_events: {e}")
+				return ResponseSchema(error=str(e))
+			except IndexError as e:
+				logging.error(f"Index error in get_events: {e}")
+				return ResponseSchema(error=str(e))
+			except Exception as e:
+				logging.error(f"Unexpected error in get_events: {e}")
+				return ResponseSchema(error=str(e))
 
-		def fire_event(self, event_type: str, event_data: dict) -> str:
+		def fire_event(self, event_type: str, event_data: dict) -> ResponseSchema:
 			"""Fire an event."""
+			logging.debug(f"fire_event called with event_type: {event_type}, event_data: {event_data}")
 			try:
-				logging.debug(f"fire_event called with event_type: {event_type}, event_data: {event_data}")
 				url = f"{self.pipeline.valves.HOME_ASSISTANT_API_URL}/api/events/{event_type}"
 				headers = self._get_headers()
 				response = requests.post(url, headers=headers, json=event_data)
 				response.raise_for_status()
 				data = response.json()
 				logging.debug(f"fire_event data: {data}")
-				return self._format_response(data, "fire_event", event_type=event_type, event_data=event_data)
-			except (requests.exceptions.RequestException, IndexError) as e:
-				logging.error(f"Error in fire_event: {e}")
-				return f"Error: {str(e)}"
+				return ResponseSchema(result=self._format_response(data, "fire_event", event_type=event_type, event_data=event_data))
+			except requests.exceptions.RequestException as e:
+				logging.error(f"Request error in fire_event: {e}")
+				return ResponseSchema(error=str(e))
+			except IndexError as e:
+				logging.error(f"Index error in fire_event: {e}")
+				return ResponseSchema(error=str(e))
+			except Exception as e:
+				logging.error(f"Unexpected error in fire_event: {e}")
+				return ResponseSchema(error=str(e))
 
-		def calculator(self, equation: str) -> str:
+		def calculator(self, equation: str) -> ResponseSchema:
 			"""
 			Calculate the result of an equation using safe evaluation.
 
 			:param equation: The equation to calculate.
 			"""
+			logging.debug(f"calculator called with equation: {equation}")
 			try:
-				logging.debug(f"calculator called with equation: {equation}")
 				result = ast.literal_eval(equation)
 				logging.debug(f"calculator result: {result}")
-				return f"{equation} = {result}"
+				return ResponseSchema(result={equation: result})
 			except Exception as e:
 				logging.error(f"Error in calculator: {e}")
-				return f"Error: Invalid equation: {str(e)}"
+				return ResponseSchema(error=f"Invalid equation: {str(e)}")
 
-		def simple_test(self) -> str:
+		def simple_test(self) -> ResponseSchema:
 			"""Simple test method to verify pipeline access."""
-			return "Pipeline is accessible and working."
+			return ResponseSchema(result="Pipeline is accessible and working.")
 
 		def _get_headers(self) -> dict:
 			"""Helper method to get headers."""
@@ -136,7 +166,7 @@ class Pipeline(FunctionCallingBlueprint):
 			logging.debug(f"Generated headers: {headers}")
 			return headers
 
-		def _format_response(self, data, name, **params) -> str:
+		def _format_response(self, data, name, **params) -> dict:
 			"""Format the response to be suitable for the LLM pipeline."""
 			response = {
 				"name": name,
