@@ -3,7 +3,10 @@ from blueprints.function_calling_blueprint import Pipeline as FunctionCallingBlu
 import requests
 import os
 import ast
+import logging
 from typing import List, Dict, Union
+
+logging.basicConfig(level=logging.DEBUG)
 
 class Pipeline(FunctionCallingBlueprint):
 	class Valves(FunctionCallingBlueprint.Valves):
@@ -21,8 +24,11 @@ class Pipeline(FunctionCallingBlueprint):
 				headers = self._get_headers()
 				response = requests.get(url, headers=headers)
 				response.raise_for_status()
-				return self._format_response(response.json(), "get_state", entity_id=entity_id)
+				data = response.json()
+				logging.debug(f"get_state data: {data}")
+				return self._format_response(data, "get_state", entity_id=entity_id)
 			except (requests.exceptions.RequestException, IndexError) as e:
+				logging.error(f"Error in get_state: {e}")
 				return self._format_error("get_state", str(e), entity_id=entity_id)
 
 		def call_service(self, domain: str, service: str, service_data: dict) -> Union[dict, str]:
@@ -32,8 +38,11 @@ class Pipeline(FunctionCallingBlueprint):
 				headers = self._get_headers()
 				response = requests.post(url, headers=headers, json=service_data)
 				response.raise_for_status()
-				return self._format_response(response.json(), "call_service", domain=domain, service=service, service_data=service_data)
+				data = response.json()
+				logging.debug(f"call_service data: {data}")
+				return self._format_response(data, "call_service", domain=domain, service=service, service_data=service_data)
 			except (requests.exceptions.RequestException, IndexError) as e:
+				logging.error(f"Error in call_service: {e}")
 				return self._format_error("call_service", str(e), domain=domain, service=service, service_data=service_data)
 
 		def get_all_states(self) -> Union[dict, str]:
@@ -43,8 +52,11 @@ class Pipeline(FunctionCallingBlueprint):
 				headers = self._get_headers()
 				response = requests.get(url, headers=headers)
 				response.raise_for_status()
-				return self._format_response(response.json(), "get_all_states")
+				data = response.json()
+				logging.debug(f"get_all_states data: {data}")
+				return self._format_response(data, "get_all_states")
 			except (requests.exceptions.RequestException, IndexError) as e:
+				logging.error(f"Error in get_all_states: {e}")
 				return self._format_error("get_all_states", str(e))
 
 		def get_events(self) -> Union[dict, str]:
@@ -54,8 +66,11 @@ class Pipeline(FunctionCallingBlueprint):
 				headers = self._get_headers()
 				response = requests.get(url, headers=headers)
 				response.raise_for_status()
-				return self._format_response(response.json(), "get_events")
+				data = response.json()
+				logging.debug(f"get_events data: {data}")
+				return self._format_response(data, "get_events")
 			except (requests.exceptions.RequestException, IndexError) as e:
+				logging.error(f"Error in get_events: {e}")
 				return self._format_error("get_events", str(e))
 
 		def fire_event(self, event_type: str, event_data: dict) -> Union[dict, str]:
@@ -65,8 +80,11 @@ class Pipeline(FunctionCallingBlueprint):
 				headers = self._get_headers()
 				response = requests.post(url, headers=headers, json=event_data)
 				response.raise_for_status()
-				return self._format_response(response.json(), "fire_event", event_type=event_type, event_data=event_data)
+				data = response.json()
+				logging.debug(f"fire_event data: {data}")
+				return self._format_response(data, "fire_event", event_type=event_type, event_data=event_data)
 			except (requests.exceptions.RequestException, IndexError) as e:
+				logging.error(f"Error in fire_event: {e}")
 				return self._format_error("fire_event", str(e), event_type=event_type, event_data=event_data)
 
 		def calculator(self, equation: str) -> str:
@@ -77,8 +95,10 @@ class Pipeline(FunctionCallingBlueprint):
 			"""
 			try:
 				result = ast.literal_eval(equation)
+				logging.debug(f"calculator result: {result}")
 				return f"{equation} = {result}"
 			except Exception as e:
+				logging.error(f"Error in calculator: {e}")
 				return f"Invalid equation: {str(e)}"
 
 		def simple_test(self) -> str:
