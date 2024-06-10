@@ -41,6 +41,29 @@ class Pipeline:
 			except Exception as err:
 				return f"An error occurred: {err}"
 
+		def get_calendar_entities(self) -> str:
+			"""
+			Get the list of calendar entities from Home Assistant.
+
+			:return: The list of calendar entities as a JSON string.
+			"""
+			if not self.pipeline.valves.HOME_ASSISTANT_URL:
+				return "Home Assistant URL not set, please configure it."
+
+			headers = {
+				"Authorization": f"Bearer {self.pipeline.valves.HOME_ASSISTANT_TOKEN}",
+				"Content-Type": "application/json"
+			}
+			try:
+				response = requests.get(f"{self.pipeline.valves.HOME_ASSISTANT_URL}/api/calendars", headers=headers)
+				response.raise_for_status()
+				data = response.json()
+				return data
+			except requests.exceptions.HTTPError as http_err:
+				return f"HTTP error occurred: {http_err}"
+			except Exception as err:
+				return f"An error occurred: {err}"
+
 	def __init__(self):
 		"""
 		Initialize the Pipeline class.
@@ -111,4 +134,6 @@ class Pipeline:
 		print(f"pipe: {__name__}")
 		if user_message.lower() == "check api status":
 			return self.tools.check_api_status()
+		elif user_message.lower() == "get calendar entities":
+			return self.tools.get_calendar_entities()
 		return f"{__name__} response to: {user_message}"
