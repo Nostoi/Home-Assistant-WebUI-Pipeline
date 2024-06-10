@@ -1,36 +1,33 @@
-import os
+from typing import List, Union, Generator, Iterator
 from datetime import datetime
-from blueprints.function_calling_blueprint import Pipeline as FunctionCallingBlueprint
 
-class Pipeline(FunctionCallingBlueprint):
-	class Valves(FunctionCallingBlueprint.Valves):
-		pass
+class Pipeline:
+    def __init__(self):
+        self.name = "Hello Response Pipeline"
 
-	class Tools:
-		def __init__(self, pipeline) -> None:
-			self.pipeline = pipeline
+    async def on_startup(self):
+        print(f"on_startup:{__name__}")
 
-		def respond_hello(self) -> str:
-			"""
-			Respond to the message "Hello" with the current date and time.
-			"""
-			now = datetime.now()
-			current_date_time = now.strftime("%Y-%m-%d %H:%M:%S")
-			return f"Hello, the date and time are {current_date_time}. You're pretty rad!"
+    async def on_shutdown(self):
+        print(f"on_shutdown:{__name__}")
 
-	def __init__(self):
-		super().__init__()
-		self.name = "Hello Response Pipeline"
-		self.valves = self.Valves(
-			**{
-				**self.valves.model_dump(),
-				"pipelines": ["*"],  # Connect to all pipelines
-			},
-		)
-		self.tools = self.Tools(self)
+    def get_current_date_time(self):
+        now = datetime.now()
+        current_date_time = now.strftime("%Y-%m-%d %H:%M:%S")
+        return f"Hello, the date and time are {current_date_time}. You're pretty rad!"
+
+    def pipe(self, user_message: str, model_id: str, messages: List[dict], body: dict) -> Union[str, Generator, Iterator]:
+        print(f"pipe:{__name__}")
+        print(messages)
+        print(user_message)
+
+        if user_message.lower() == "hello":
+            return self.get_current_date_time()
+        else:
+            return "Unrecognized message"
 
 # Example usage
 if __name__ == "__main__":
-	pipeline = Pipeline()
-	response = pipeline.tools.respond_hello()
-	print(response)
+    pipeline = Pipeline()
+    response = pipeline.pipe("Hello", "", [], {})
+    print(response)
