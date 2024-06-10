@@ -1,8 +1,7 @@
 import os
 import requests
 from typing import List, Union, Generator, Iterator
-from pydantic import BaseModel
-from fastapi.responses import JSONResponse
+from pydantic import BaseModel, ValidationError
 
 class Pipeline:
 	class Valves(BaseModel):
@@ -14,14 +13,14 @@ class Pipeline:
 		def __init__(self, pipeline) -> None:
 			self.pipeline = pipeline
 
-		def check_api_status(self) -> JSONResponse:
+		def check_api_status(self) -> str:
 			"""
 			Check if the Home Assistant API is running.
 
-			:return: A JSONResponse indicating the API status.
+			:return: A message indicating the API status.
 			"""
 			if not self.pipeline.valves.HOME_ASSISTANT_URL:
-				return JSONResponse(content={"error": "Home Assistant URL not set, please configure it."}, status_code=400)
+				return "Home Assistant URL not set, please configure it."
 			
 			headers = {
 				"Authorization": f"Bearer {self.pipeline.valves.HOME_ASSISTANT_TOKEN}",
@@ -31,20 +30,20 @@ class Pipeline:
 				response = requests.get(f"{self.pipeline.valves.HOME_ASSISTANT_URL}/api/", headers=headers)
 				response.raise_for_status()
 				data = response.json()
-				return JSONResponse(content=data, status_code=200)
+				return f"API Status: {data['message']}"
 			except requests.exceptions.HTTPError as http_err:
-				return JSONResponse(content={"error": f"HTTP error occurred: {http_err}"}, status_code=response.status_code)
+				return f"HTTP error occurred: {http_err}"
 			except Exception as err:
-				return JSONResponse(content={"error": f"An error occurred: {err}"}, status_code=500)
+				return f"An error occurred: {err}"
 
-		def get_calendar_entities(self) -> JSONResponse:
+		def get_calendar_entities(self) -> str:
 			"""
 			Get the list of calendar entities from Home Assistant.
 
-			:return: A JSONResponse with the list of calendar entities.
+			:return: The list of calendar entities as a string.
 			"""
 			if not self.pipeline.valves.HOME_ASSISTANT_URL:
-				return JSONResponse(content={"error": "Home Assistant URL not set, please configure it."}, status_code=400)
+				return "Home Assistant URL not set, please configure it."
 
 			headers = {
 				"Authorization": f"Bearer {self.pipeline.valves.HOME_ASSISTANT_TOKEN}",
@@ -54,11 +53,12 @@ class Pipeline:
 				response = requests.get(f"{self.pipeline.valves.HOME_ASSISTANT_URL}/api/calendars", headers=headers)
 				response.raise_for_status()
 				data = response.json()
-				return JSONResponse(content=data, status_code=200)
+				entities = [f"{entity['name']} ({entity['entity_id']})" for entity in data]
+				return "\n".join(entities)
 			except requests.exceptions.HTTPError as http_err:
-				return JSONResponse(content={"error": f"HTTP error occurred: {http_err}"}, status_code=response.status_code)
+				return f"HTTP error occurred: {http_err}"
 			except Exception as err:
-				return JSONResponse(content={"error": f"An error occurred: {err}"}, status_code=500)
+				return f"An error occurred: {err}"
 
 	def __init__(self):
 		"""
