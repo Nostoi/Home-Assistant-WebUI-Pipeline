@@ -7,6 +7,7 @@ class Pipeline:
 	class Valves(BaseModel):
 		"""Defines environment variable configurations."""
 		HOME_ASSISTANT_TOKEN: str = ""
+		HOME_ASSISTANT_URL: str = ""
 
 	class Tools:
 		def __init__(self, pipeline) -> None:
@@ -23,12 +24,15 @@ class Pipeline:
 
 			:return: A message indicating the API status.
 			"""
+			if not self.pipeline.valves.HOME_ASSISTANT_URL:
+				return "Home Assistant URL not set, please configure it."
+			
 			headers = {
 				"Authorization": f"Bearer {self.pipeline.valves.HOME_ASSISTANT_TOKEN}",
 				"Content-Type": "application/json"
 			}
 			try:
-				response = requests.get("http://localhost:8123/api/", headers=headers)
+				response = requests.get(f"{self.pipeline.valves.HOME_ASSISTANT_URL}/api/", headers=headers)
 				response.raise_for_status()
 				data = response.json()
 				return f"API Status: {data['message']}"
@@ -45,6 +49,7 @@ class Pipeline:
 		self.valves = self.Valves(
 			**{
 				"HOME_ASSISTANT_TOKEN": os.getenv("HOME_ASSISTANT_TOKEN", ""),
+				"HOME_ASSISTANT_URL": os.getenv("HOME_ASSISTANT_URL", ""),
 			},
 		)
 		self.tools = self.Tools(self)
